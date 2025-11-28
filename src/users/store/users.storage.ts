@@ -1,21 +1,25 @@
 import { randomUUID } from 'crypto';
 import { UserStorage } from '../interfaces/user-storage.interface';
 import { User } from '../entities/user.entity';
-import { Injectable } from '@nestjs/common';
-
-import {  UserParams } from '../interfaces/user-params.interface';
 import { UpdateUserDto } from '../dto/update-user.dto';
+import { CreateUserDto } from '../dto/create-user.dto';
+import { ConflictException, Injectable } from '@nestjs/common';
 
 @Injectable()
-class InMemoryStore implements UserStorage {
+export class InMemoryStore implements UserStorage {
   public users: User[];
 
-  constructor(users: User[]) {
-    this.users = users;
+  constructor() {
+    this.users = [];
   }
 
-  create(params: UserParams) {
-    const newUser = { ...params, id: randomUUID() };
+  create(params: CreateUserDto) {
+    const {login, password} = params;
+    const exists = this.users.find(user => user.login === login);
+    if (exists) {
+      throw new ConflictException('User already exists');
+    }
+    const newUser:User = {login:login,password:password, id: randomUUID(),version:1, createdAt:new Date().getTime(),updatedAt: new Date().getTime() };
     this.users.push(newUser);
     return newUser;
   }
@@ -25,30 +29,19 @@ class InMemoryStore implements UserStorage {
   }
 
   getAll(){
-    return this.users;
+      return this.users;
   };
 
   update(id: string,params:UpdateUserDto) {
-    if (!id) {
-      return 'userId is invalid'
-    }
-    else {
-      const updatedUser = this.users.find(user => user.id === id);
-      if (!updatedUser) {
-        return `record with id =${id} does not exist`
-      }
-      else {
-        if(updatedUser.password!==params.oldPassword){
-          return `oldPassword is wrong`
-        }
-        else {
-          return 'updated'
-        }
-      }
-
-    }
+    const userToUpdate = this.getById(id);
+    const updatedIndex= this.users.indexOf(userToUpdate);
+    const updatedUser = {...userToUpdate,password:params.newPassword,version:++userToUpdate.version ,updatedAt:new Date().getTime()};
+    this.users[updatedIndex]=updatedUser;
+    const {password, ...updatedUserToShow}=updatedUser;
+    return updatedUserToShow;
   }
+
   delete(id:string) {
-    return this.users.filter(user => user.id !== id);
+    this.users = this.users.filter(user => user.id !== id);
   }
 }

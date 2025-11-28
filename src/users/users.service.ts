@@ -1,29 +1,49 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UserStorage } from './interfaces/user-storage.interface';
+import { InMemoryStore } from './store/users.storage';
+
 
 @Injectable()
 export class UsersService {
-  constructor(private storage: UserStorage) {}
+  constructor(public storage: InMemoryStore) {
+  }
 
   create(createUserDto: CreateUserDto) {
-    return this.create(createUserDto);
+    const { password, ...noPasswordUser } = this.storage.create(createUserDto);
+    return noPasswordUser;
   }
 
   findAll() {
-    return `This action returns all users`;
+    const allUsers = this.storage.getAll();
+    return allUsers.map(({ password, ...noPasswordUser }) => noPasswordUser);
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  findOne(id: string) {
+    const result = this.storage.getById(id);
+    if (!result) {
+      throw new NotFoundException('User with this id does not exist');
+    }
+    const { password, ...user } = result;
+    return user;
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
-  }
+  update(id: string, updateUserDto: UpdateUserDto) {
+    const user= this.storage.getById(id);
+    if (!user) {
+      throw new NotFoundException('User with this id does not exist');
+    }
+    if (user && user.password !== updateUserDto.oldPassword) {
+      throw new ForbiddenException('OldPassword is wrong');
+    }
+    return this.storage.update(id, updateUserDto);
+   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  remove(id: string) {
+    const user= this.storage.getById(id);
+    if(!user) {
+      throw new NotFoundException('User with this id does not exist');
+    }
+    this.storage.delete(id);
   }
 }
