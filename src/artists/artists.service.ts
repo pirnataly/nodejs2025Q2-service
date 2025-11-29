@@ -1,26 +1,42 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateArtistDto } from './dto/create-artist.dto';
 import { UpdateArtistDto } from './dto/update-artist.dto';
+import { ArtistsStorage } from './store/artists.storage';
 
 @Injectable()
 export class ArtistsService {
-  create(createArtistDto: CreateArtistDto) {
-    return 'This action adds a new artist';
+
+  constructor(public storage: ArtistsStorage) {
+  }
+  create(dto: CreateArtistDto) {
+    return this.storage.create(dto);
   }
 
   findAll() {
-    return `This action returns all artists`;
+    return this.storage.getAll();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} artist`;
+  findOne(id: string) {
+    const artist = this.storage.getById(id);
+    if (!artist) {
+      throw new NotFoundException(`Artist with id ${id} is not found`);
+    }
+    return artist;
   }
 
-  update(id: number, updateArtistDto: UpdateArtistDto) {
-    return `This action updates a #${id} artist`;
+  update(id: string, dto: UpdateArtistDto) {
+    const artist = this.storage.getById(id);
+    if(!artist) {
+      throw new NotFoundException(`Artist with id ${id} doesn't exist`);
+    }
+    return this.storage.update(id, dto);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} artist`;
+  remove(id: string) {
+    const artist = this.storage.getById(id);
+    if(!artist) {
+      throw new NotFoundException(`Artist with id ${id} doesn't exist`);
+    }
+    return this.storage.delete(id);
   }
 }

@@ -1,12 +1,12 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { InMemoryStore } from './store/users.storage';
+import { UsersStorage } from './store/users.storage';
 
 
 @Injectable()
 export class UsersService {
-  constructor(public storage: InMemoryStore) {
+  constructor(public storage: UsersStorage) {
   }
 
   create(createUserDto: CreateUserDto) {
