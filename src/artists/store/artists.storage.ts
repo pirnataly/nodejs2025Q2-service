@@ -3,8 +3,8 @@ import { InMemoryStore } from '../../storage/in-memory.store';
 import { CreateArtistDto } from '../dto/create-artist.dto';
 import { ConflictException, Injectable } from '@nestjs/common';
 import { randomUUID } from 'crypto';
-import { Artist } from '../interfaces/artists.interface';
 import { UpdateArtistDto } from '../dto/update-artist.dto';
+import { Artist } from '../interfaces/artists.interface';
 
 @Injectable()
 export class ArtistsStorage implements ArtistStorageInterface {
